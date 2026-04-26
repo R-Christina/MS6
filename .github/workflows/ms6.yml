@@ -42,11 +42,10 @@ jobs:
             --cov-report=term \
             --junitxml=reports/tests.xml
 
-      - name: Debug coverage output
+      - name: Fix coverage source path
         run: |
-          ls -R reports
-          head -50 reports/coverage.xml
-
+          sed -i "s|<source>src</source>|<source>/github/workspace/MS/src</source>|" reports/coverage.xml
+          grep "<source>" reports/coverage.xml
       # FLAKE8
       - name: Flake8 scan
         run: |
@@ -66,15 +65,6 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@v3
         with:
           projectBaseDir: MS
-          args: >
-            -Dsonar.projectKey=R-Christina_MS6
-            -Dsonar.organization=r-christina
-            -Dsonar.sources=src
-            -Dsonar.tests=tests
-            -Dsonar.python.version=3.11
-            -Dsonar.python.coverage.reportPaths=reports/coverage.xml
-            -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
