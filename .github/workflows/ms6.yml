@@ -39,13 +39,17 @@ jobs:
           pytest tests/ -v \
             --cov=src/domain \
             --cov-report=xml:reports/coverage.xml \
-            --cov-report=term \
+            --cov-report=term-missing \
             --junitxml=reports/tests.xml
 
       - name: Debug coverage output
         run: |
-          ls -R reports
-          head -50 reports/coverage.xml
+          echo "=== Files in reports directory ==="
+          ls -la reports/
+          echo "=== Coverage XML content ==="
+          cat reports/coverage.xml
+          echo "=== Validate coverage.xml exists and is not empty ==="
+          [ -s reports/coverage.xml ] && echo "✓ Coverage file exists and has content" || echo "✗ Coverage file is missing or empty"
 
       # FLAKE8
       - name: Flake8 scan
