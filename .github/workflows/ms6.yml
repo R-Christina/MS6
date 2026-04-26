@@ -1,0 +1,72 @@
+name: MS6 DevSecOps Pipeline
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  devsecops:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── 2. Build image Docker ─────────────────────────────────────
+      - name: Build Docker image
+        run: docker build -t ms6 .
+        working-directory: MS
+
+      # ── 3. Tests + coverage ───────────────────────────────────────
+      - name: Run tests with coverage
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/MS:/app \
+            ms6 pytest tests/ -v \
+            --junitxml=rapport_tests.xml \
+            --cov=src \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term | tee rapport_tests.txt
+
+      # ── 4. Flake8 AVANT correction ────────────────────────────────
+      - name: Flake8 scan avant
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/MS:/app \
+            ms6 flake8 src/ --statistics \
+            | tee MS/flake8_avant.txt || true
+
+      # ── 5. Snyk AVANT correction ──────────────────────────────────
+      - name: Snyk scan avant
+        working-directory: MS
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          npm install -g snyk
+          snyk auth $SNYK_TOKEN
+          snyk test --file=requirements.txt \
+            > snyk_avant.txt || true
+
+      # ── 6. SonarCloud scan ────────────────────────────────────────
+      - name: SonarCloud scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectBaseDir: MS
+
+      # ── 7. Upload tous les artefacts ──────────────────────────────
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: devsecops-reports
+          path: |
+            MS/rapport_tests.txt
+            MS/rapport_tests.xml
+            MS/coverage.xml
+            MS/flake8_avant.txt
+            MS/snyk_avant.txt
