@@ -39,10 +39,12 @@ jobs:
             --cov-report=xml:reports/coverage.xml \
             --cov-report=term \
             --junitxml=reports/tests.xml
+          python -c "import xml.etree.ElementTree as ET; ET.parse('reports/coverage.xml'); print('XML valid')"
 
-      - name: Debug coverage output
+      - name: Check coverage report exists
         run: |
-          ls -R reports
+          ls -la reports/coverage.xml
+          echo "Coverage report path: $(pwd)/reports/coverage.xml"
           cat reports/coverage.xml | head -50
 
       # FLAKE8
@@ -75,6 +77,7 @@ jobs:
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ARTIFACTS
       - name: Upload reports
