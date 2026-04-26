@@ -74,7 +74,8 @@ jobs:
             -Dsonar.python.version=3.11
             -Dsonar.python.coverage.reportPaths=reports/coverage.xml
             -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.verbose=true
+            # AJOUTEZ CETTE LIGNE CI-DESSOUS
+            -Dsonar.working.directory=.sonar 
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
