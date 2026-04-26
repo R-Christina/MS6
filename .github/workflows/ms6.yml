@@ -11,43 +11,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ── 2. Build image Docker ─────────────────────────────────────
+      # Le Dockerfile est dans MS/
       - name: Build Docker image
-        run: docker build -t ms6 .
         working-directory: MS
+        run: docker build -t ms6 .
 
-      # ── 3. Tests + coverage ───────────────────────────────────────
-      # On monte /app en volume pour récupérer les fichiers générés
-      # directement sur le runner, là où Sonar pourra les lire
+      # Le volume monte MS/ dans /app du conteneur
+      # Les fichiers générés arrivent directement dans MS/ sur le runner
       - name: Run tests with coverage
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/MS:/app \
             ms6 pytest tests/ -v \
-            --junitxml=rapport_tests.xml \
-            --cov=src \
-            --cov-report=xml:coverage.xml \
+            --junitxml=/app/rapport_tests.xml \
+            --cov=/app/src \
+            --cov-report=xml:/app/coverage.xml \
             --cov-report=term | tee MS/rapport_tests.txt
 
-      # ── 4. Vérifier que coverage.xml est bien là ──────────────────
       - name: Check coverage.xml exists
-        run: |
-          ls -la MS/
-          cat MS/coverage.xml | head -5
+        run: ls -la MS/ && cat MS/coverage.xml | head -10
 
-      # ── 5. Flake8 AVANT correction ────────────────────────────────
       - name: Flake8 scan avant
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/MS:/app \
-            ms6 flake8 src/ --statistics \
+            ms6 flake8 /app/src/ --statistics \
             | tee MS/flake8_avant.txt || true
 
-      # ── 6. Snyk AVANT correction ──────────────────────────────────
       - name: Snyk scan avant
         working-directory: MS
         env:
@@ -55,11 +48,9 @@ jobs:
         run: |
           npm install -g snyk
           snyk auth $SNYK_TOKEN
-          snyk test --file=requirements.txt \
-            > snyk_avant.txt || true
+          snyk test --file=requirements.txt > snyk_avant.txt || true
 
-      # ── 7. SonarCloud scan ────────────────────────────────────────
-      # Sonar lit coverage.xml depuis MS/ grâce au volume monté à l'étape 3
+      # projectBaseDir pointe sur MS/ depuis la racine du repo
       - name: SonarCloud scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -68,7 +59,6 @@ jobs:
         with:
           projectBaseDir: MS
 
-      # ── 8. Upload tous les artefacts ──────────────────────────────
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
