@@ -1,14 +1,18 @@
-name: MS6 Sonar Coverage
+name: MS6 DevSecOps Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "master"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "master"]
 
 jobs:
-  sonar:
+  devsecops:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: MS
 
     steps:
       - name: Checkout code
@@ -23,30 +27,60 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r MS/requirements.txt
-          pip install pytest pytest-cov
+          pip install -r requirements.txt
+          pip install pytest pytest-cov flake8
 
+      # TEST + COVERAGE
       - name: Run tests with coverage
+        env:
+          PYTHONPATH: src
         run: |
-          cd MS
-          PYTHONPATH=src pytest tests \
+          mkdir -p reports
+          pytest tests/ -v \
             --cov=src \
             --cov-report=xml:reports/coverage.xml \
-            --cov-report=term
+            --cov-report=term \
+            --junitxml=reports/tests.xml
 
-      - name: Show coverage file
-        run: ls -R MS/reports
+      - name: Debug coverage output
+        run: |
+          ls -R reports
+          head -50 reports/coverage.xml
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v3
+      # FLAKE8
+      - name: Flake8 scan
+        run: |
+          flake8 src --statistics | tee reports/flake8.txt || true
+
+      # SNYK
+      - name: Snyk scan
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          npm install -g snyk
+          snyk auth $SNYK_TOKEN
+          snyk test --file=requirements.txt > reports/snyk.txt || true
+
+      # SONARCLOUD
+      - name: SonarCloud scan
+        uses: SonarSource/sonarcloud-github-action@v3
         with:
+          projectBaseDir: MS
           args: >
             -Dsonar.projectKey=R-Christina_MS6
             -Dsonar.organization=r-christina
-            -Dsonar.projectBaseDir=MS
             -Dsonar.sources=src
             -Dsonar.tests=tests
             -Dsonar.python.version=3.11
             -Dsonar.python.coverage.reportPaths=reports/coverage.xml
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.verbose=true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # ARTIFACTS
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: devsecops-reports
+          path: MS/reports/
