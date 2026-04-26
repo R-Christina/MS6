@@ -14,13 +14,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Le Dockerfile est dans MS/
       - name: Build Docker image
         working-directory: MS
         run: docker build -t ms6 .
 
-      # Le volume monte MS/ dans /app du conteneur
-      # Les fichiers générés arrivent directement dans MS/ sur le runner
       - name: Run tests with coverage
         run: |
           docker run --rm \
@@ -33,6 +30,13 @@ jobs:
 
       - name: Check coverage.xml exists
         run: ls -la MS/ && cat MS/coverage.xml | head -10
+
+      # Remplace /app/src par src pour que SonarCloud trouve les fichiers
+      - name: Fix coverage paths for SonarCloud
+        run: |
+          sed -i 's|/app/src|src|g' MS/coverage.xml
+          echo "--- coverage.xml après fix ---"
+          cat MS/coverage.xml | head -10
 
       - name: Flake8 scan avant
         run: |
@@ -50,7 +54,6 @@ jobs:
           snyk auth $SNYK_TOKEN
           snyk test --file=requirements.txt > snyk_avant.txt || true
 
-      # projectBaseDir pointe sur MS/ depuis la racine du repo
       - name: SonarCloud scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
