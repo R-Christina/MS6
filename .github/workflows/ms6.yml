@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov flake8
 
-      #TEST + COVERAGE PROPRE
+      # TEST + COVERAGE
       - name: Run tests with coverage
         env:
           PYTHONPATH: src
@@ -40,19 +40,19 @@ jobs:
             --cov=src \
             --cov-report=xml:reports/coverage.xml \
             --cov-report=term \
-            --junitxml=reports/tests.xml | tee reports/tests.txt
+            --junitxml=reports/tests.xml
 
-      - name: Check coverage
+      - name: Debug coverage output
         run: |
-          ls -la reports
-          grep -n "filename=" reports/coverage.xml | head -20
+          ls -R reports
+          head -50 reports/coverage.xml
 
-      #FLAKE8
+      # FLAKE8
       - name: Flake8 scan
         run: |
           flake8 src --statistics | tee reports/flake8.txt || true
 
-      #SNYK
+      # SNYK
       - name: Snyk scan
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -61,7 +61,7 @@ jobs:
           snyk auth $SNYK_TOKEN
           snyk test --file=requirements.txt > reports/snyk.txt || true
 
-      #SONARCLOUD (CONFIG FORCÉE = PAS D’AMBIGUÏTÉ)
+      # SONARCLOUD
       - name: SonarCloud scan
         uses: SonarSource/sonarcloud-github-action@v3
         with:
@@ -78,6 +78,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      # ARTIFACTS
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
