@@ -10,67 +10,76 @@ jobs:
   devsecops:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: MS
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Build Docker image
-        working-directory: MS
-        run: docker build -t ms6 .
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov flake8
+
+      #TEST + COVERAGE PROPRE
       - name: Run tests with coverage
+        env:
+          PYTHONPATH: src
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/MS:/app \
-            ms6 pytest tests/ -v \
-            --junitxml=/app/rapport_tests.xml \
+          mkdir -p reports
+          pytest tests/ -v \
             --cov=src \
-            --cov-report=xml:/app/coverage.xml \
-            --cov-report=term | tee MS/rapport_tests.txt
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=term \
+            --junitxml=reports/tests.xml | tee reports/tests.txt
 
-      - name: Check coverage.xml exists
+      - name: Check coverage
         run: |
-          ls -la MS/
-          head -20 MS/coverage.xml
+          ls -la reports
+          grep -n "filename=" reports/coverage.xml | head -20
 
-      # 🔥 FIX IMPORTANT : rendre les paths compatibles Sonar
-      - name: Fix coverage paths for SonarCloud
-        run: |
-          sed -i 's|/app/src|src|g' MS/coverage.xml
-          echo "---- coverage fixed ----"
-          head -20 MS/coverage.xml
-
+      #FLAKE8
       - name: Flake8 scan
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}/MS:/app \
-            ms6 flake8 /app/src/ --statistics \
-            | tee MS/flake8_avant.txt || true
+          flake8 src --statistics | tee reports/flake8.txt || true
 
+      #SNYK
       - name: Snyk scan
-        working-directory: MS
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
           npm install -g snyk
           snyk auth $SNYK_TOKEN
-          snyk test --file=requirements.txt > snyk_avant.txt || true
+          snyk test --file=requirements.txt > reports/snyk.txt || true
 
+      #SONARCLOUD (CONFIG FORCÉE = PAS D’AMBIGUÏTÉ)
       - name: SonarCloud scan
-        uses: SonarSource/sonarcloud-github-action@v2
+        uses: SonarSource/sonarcloud-github-action@v3
         with:
           projectBaseDir: MS
+          args: >
+            -Dsonar.projectKey=R-Christina_MS6
+            -Dsonar.organization=r-christina
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.python.version=3.11
+            -Dsonar.python.coverage.reportPaths=reports/coverage.xml
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
           name: devsecops-reports
-          path: |
-            MS/rapport_tests.txt
-            MS/rapport_tests.xml
-            MS/coverage.xml
-            MS/flake8_avant.txt
-            MS/snyk_avant.txt
+          path: MS/reports/
