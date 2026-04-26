@@ -21,6 +21,8 @@ jobs:
         working-directory: MS
 
       # ── 3. Tests + coverage ───────────────────────────────────────
+      # On monte /app en volume pour récupérer les fichiers générés
+      # directement sur le runner, là où Sonar pourra les lire
       - name: Run tests with coverage
         run: |
           docker run --rm \
@@ -29,9 +31,15 @@ jobs:
             --junitxml=rapport_tests.xml \
             --cov=src \
             --cov-report=xml:coverage.xml \
-            --cov-report=term | tee rapport_tests.txt
+            --cov-report=term | tee MS/rapport_tests.txt
 
-      # ── 4. Flake8 AVANT correction ────────────────────────────────
+      # ── 4. Vérifier que coverage.xml est bien là ──────────────────
+      - name: Check coverage.xml exists
+        run: |
+          ls -la MS/
+          cat MS/coverage.xml | head -5
+
+      # ── 5. Flake8 AVANT correction ────────────────────────────────
       - name: Flake8 scan avant
         run: |
           docker run --rm \
@@ -39,7 +47,7 @@ jobs:
             ms6 flake8 src/ --statistics \
             | tee MS/flake8_avant.txt || true
 
-      # ── 5. Snyk AVANT correction ──────────────────────────────────
+      # ── 6. Snyk AVANT correction ──────────────────────────────────
       - name: Snyk scan avant
         working-directory: MS
         env:
@@ -50,7 +58,8 @@ jobs:
           snyk test --file=requirements.txt \
             > snyk_avant.txt || true
 
-      # ── 6. SonarCloud scan ────────────────────────────────────────
+      # ── 7. SonarCloud scan ────────────────────────────────────────
+      # Sonar lit coverage.xml depuis MS/ grâce au volume monté à l'étape 3
       - name: SonarCloud scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -59,7 +68,7 @@ jobs:
         with:
           projectBaseDir: MS
 
-      # ── 7. Upload tous les artefacts ──────────────────────────────
+      # ── 8. Upload tous les artefacts ──────────────────────────────
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
