@@ -42,10 +42,9 @@ jobs:
             --cov-report=term \
             --junitxml=reports/tests.xml
 
-      - name: Debug coverage output
+      - name: Fix coverage paths for SonarCloud
         run: |
-          ls -R reports
-          head -50 reports/coverage.xml
+          sed -i 's|<source>.*</source>|<source>MS/src</source>|g' reports/coverage.xml
 
       # FLAKE8
       - name: Flake8 scan
