@@ -1,4 +1,4 @@
-name: MS6 Debug Pipeline
+name: MS6 Sonar Coverage
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: ["main"]
 
 jobs:
-  debug:
+  sonar:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,21 +16,37 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Show full repo structure
-        run: tree -a
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-      - name: Check MS folder
+      - name: Install dependencies
         run: |
-          ls -R MS
+          pip install -r MS/requirements.txt
+          pip install pytest pytest-cov
 
-      - name: Check src folder
+      - name: Run tests with coverage
         run: |
-          ls -R MS/src || echo "MS/src NOT FOUND"
+          cd MS
+          PYTHONPATH=src pytest tests \
+            --cov=src \
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=term
 
-      - name: Check tests folder
-        run: |
-          ls -R MS/tests || echo "MS/tests NOT FOUND"
+      - name: Show coverage file
+        run: ls -R MS/reports
 
-      - name: Check requirements
-        run: |
-          cat MS/requirements.txt || echo "requirements.txt NOT FOUND"
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=R-Christina_MS6
+            -Dsonar.organization=r-christina
+            -Dsonar.projectBaseDir=MS
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.python.version=3.11
+            -Dsonar.python.coverage.reportPaths=reports/coverage.xml
