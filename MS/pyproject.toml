@@ -20,6 +20,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.coverage.run]
 source = ["src"]
 relative_files = true
+branch = true
 
 [tool.coverage.report]
 exclude_lines = [
@@ -33,8 +34,6 @@ exclude_lines = [
     "@(abc\\.)?abstractmethod",
 ]
 omit = [
-    "*/tests/*",
-    "*/site-packages/*",
     "*/__init__.py"
 ]
 

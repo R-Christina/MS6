@@ -30,14 +30,12 @@ jobs:
       - name: Run tests with coverage
         run: |
           cd MS
-          mkdir -p reports
-
           PYTHONPATH=src pytest tests/ -v \
             --cov=src \
             --cov-config=pyproject.toml \
-            --cov-report=xml:reports/coverage.xml \
+            --cov-report=xml:coverage.xml \
             --cov-report=term \
-            --junitxml=reports/tests.xml
+            --junitxml=tests.xml
 
       - name: Debug coverage output
         run: |
@@ -70,7 +68,7 @@ jobs:
             -Dsonar.sources=src
             -Dsonar.tests=tests
             -Dsonar.python.version=3.11
-            -Dsonar.python.coverage.reportPaths=reports/coverage.xml
+            -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.coverage.exclusions=**/__init__.py
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.verbose=true
