@@ -1,8 +1,0 @@
-[run]
-source = src
-relative_files = True
-
-[report]
-omit =
-    */__init__.py
-    */tests/*
