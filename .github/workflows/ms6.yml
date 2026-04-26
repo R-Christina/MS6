@@ -10,10 +10,6 @@ jobs:
   devsecops:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: MS
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,29 +23,30 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r MS/requirements.txt
           pip install pytest pytest-cov flake8
 
-      # TEST + COVERAGE
+      # TEST + COVERAGE (IMPORTANT: cd MS pour éviter chemins cassés)
       - name: Run tests with coverage
         run: |
+          cd MS
           mkdir -p reports
+
           PYTHONPATH=src pytest tests/ -v \
             --cov=src \
             --cov-report=xml:reports/coverage.xml \
             --cov-report=term \
             --junitxml=reports/tests.xml
-          python -c "import xml.etree.ElementTree as ET; ET.parse('reports/coverage.xml'); print('XML valid')"
 
-      - name: Check coverage report exists
+      - name: Debug coverage output
         run: |
-          ls -la reports/coverage.xml
-          echo "Coverage report path: $(pwd)/reports/coverage.xml"
-          cat reports/coverage.xml | head -50
+          ls -R MS/reports
+          cat MS/reports/coverage.xml | head -50
 
       # FLAKE8
       - name: Flake8 scan
         run: |
+          cd MS
           flake8 src --statistics | tee reports/flake8.txt || true
 
       # SNYK
@@ -59,25 +56,25 @@ jobs:
         run: |
           npm install -g snyk
           snyk auth $SNYK_TOKEN
-          snyk test --file=requirements.txt > reports/snyk.txt || true
+          snyk test --file=MS/requirements.txt > MS/reports/snyk.txt || true
 
       # SONARCLOUD
       - name: SonarCloud scan
         uses: SonarSource/sonarcloud-github-action@v3
         with:
-          projectBaseDir: MS
           args: >
             -Dsonar.projectKey=R-Christina_MS6
             -Dsonar.organization=r-christina
+            -Dsonar.projectBaseDir=MS
             -Dsonar.sources=src
             -Dsonar.tests=tests
             -Dsonar.python.version=3.11
             -Dsonar.python.coverage.reportPaths=reports/coverage.xml
+            -Dsonar.coverage.exclusions=**/__init__.py
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ARTIFACTS
       - name: Upload reports
