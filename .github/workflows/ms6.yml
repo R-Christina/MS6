@@ -33,11 +33,11 @@ jobs:
       # TEST + COVERAGE
       - name: Run tests with coverage
         env:
-          PYTHONPATH: src
+          PYTHONPATH: .
         run: |
           mkdir -p reports
           pytest tests/ -v \
-            --cov=src \
+            --cov=src/domain \
             --cov-report=xml:reports/coverage.xml \
             --cov-report=term \
             --junitxml=reports/tests.xml

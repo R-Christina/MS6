@@ -1,6 +1,6 @@
 """Unit tests for the validator module."""
 import pytest
-from domain.validator import validate_positive, validate_non_empty_string
+from src.domain.validator import validate_positive, validate_non_empty_string
 
 
 def test_validate_positive_true():
