@@ -17,6 +17,27 @@ packages = [{include = "domain", from = "src"}]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.coverage.run]
+source = ["src"]
+relative_files = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+omit = [
+    "*/tests/*",
+    "*/site-packages/*",
+    "*/__init__.py"
+]
+
 [dependency-groups]
 dev = [
     "pytest (>=9.0.3,<10.0.0)",
