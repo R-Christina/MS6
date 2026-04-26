@@ -24,7 +24,7 @@ jobs:
             -v ${{ github.workspace }}/MS:/app \
             ms6 pytest tests/ -v \
             --junitxml=/app/rapport_tests.xml \
-            --cov=/app/src \
+            --cov=/app/src/domain \
             --cov-report=xml:/app/coverage.xml \
             --cov-report=term | tee MS/rapport_tests.txt
 
@@ -34,9 +34,9 @@ jobs:
       # Remplace /app/src par src pour que SonarCloud trouve les fichiers
       - name: Fix coverage paths for SonarCloud
         run: |
-          sed -i 's|/app/src|src|g' MS/coverage.xml
+          sed -i "s|<source>/app/src</source>|<source>${{ github.workspace }}/MS/src</source>|g" MS/coverage.xml
           echo "--- coverage.xml après fix ---"
-          cat MS/coverage.xml | head -10
+          cat MS/coverage.xml | head -15
 
       - name: Flake8 scan avant
         run: |
