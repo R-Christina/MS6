@@ -24,28 +24,30 @@ jobs:
             -v ${{ github.workspace }}/MS:/app \
             ms6 pytest tests/ -v \
             --junitxml=/app/rapport_tests.xml \
-            --cov=/app/src/domain \
+            --cov=src \
             --cov-report=xml:/app/coverage.xml \
             --cov-report=term | tee MS/rapport_tests.txt
 
       - name: Check coverage.xml exists
-        run: ls -la MS/ && cat MS/coverage.xml | head -10
+        run: |
+          ls -la MS/
+          head -20 MS/coverage.xml
 
-      # Remplace /app/src par src pour que SonarCloud trouve les fichiers
+      # 🔥 FIX IMPORTANT : rendre les paths compatibles Sonar
       - name: Fix coverage paths for SonarCloud
         run: |
-          sed -i "s|<source>/app/src</source>|<source>${{ github.workspace }}/MS/src</source>|g" MS/coverage.xml
-          echo "--- coverage.xml après fix ---"
-          cat MS/coverage.xml | head -15
+          sed -i 's|/app/src|src|g' MS/coverage.xml
+          echo "---- coverage fixed ----"
+          head -20 MS/coverage.xml
 
-      - name: Flake8 scan avant
+      - name: Flake8 scan
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/MS:/app \
             ms6 flake8 /app/src/ --statistics \
             | tee MS/flake8_avant.txt || true
 
-      - name: Snyk scan avant
+      - name: Snyk scan
         working-directory: MS
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -55,12 +57,12 @@ jobs:
           snyk test --file=requirements.txt > snyk_avant.txt || true
 
       - name: SonarCloud scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: MS
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          projectBaseDir: MS
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
