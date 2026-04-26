@@ -2,9 +2,9 @@ name: MS6 DevSecOps Pipeline
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main"]
   pull_request:
-    branches: ["main", "master"]
+    branches: ["main"]
 
 jobs:
   devsecops:
@@ -32,24 +32,18 @@ jobs:
 
       # TEST + COVERAGE
       - name: Run tests with coverage
-        env:
-          PYTHONPATH: .
         run: |
           mkdir -p reports
-          pytest tests/ -v \
-            --cov=src/domain \
+          PYTHONPATH=src pytest tests/ -v \
+            --cov=src \
             --cov-report=xml:reports/coverage.xml \
-            --cov-report=term-missing \
+            --cov-report=term \
             --junitxml=reports/tests.xml
 
       - name: Debug coverage output
         run: |
-          echo "=== Files in reports directory ==="
-          ls -la reports/
-          echo "=== Coverage XML content ==="
-          cat reports/coverage.xml
-          echo "=== Validate coverage.xml exists and is not empty ==="
-          [ -s reports/coverage.xml ] && echo "✓ Coverage file exists and has content" || echo "✗ Coverage file is missing or empty"
+          ls -R reports
+          cat reports/coverage.xml | head -50
 
       # FLAKE8
       - name: Flake8 scan
