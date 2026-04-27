@@ -41,6 +41,7 @@ jobs:
             --cov-report=xml:reports/coverage.xml \
             --cov-report=term \
             --junitxml=reports/tests.xml
+            
 
       - name: Fix coverage source path
         run: |
