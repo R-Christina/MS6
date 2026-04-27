@@ -47,6 +47,7 @@ def validate_sensor_reading(sensor: str, value: float) -> SensorEvent:
     Point d'entrée de la validation.
     Orchestre : lookup seuil → classification → construction événement.
     """
+    debug_mode = True
     threshold = SENSOR_THRESHOLDS.get(sensor)
 
     if threshold is None:
