@@ -164,3 +164,4 @@ def test_validate_sensor_reading_unknown():
     result = validate_sensor_reading("unknown_sensor", 42.0)
     assert result.level == "unknown"
     assert result.valid is False
+    

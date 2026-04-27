@@ -38,3 +38,4 @@ class SensorEvent(BaseModel):
     unit: str | None = None
     threshold: float | None = None  # seuil critique de référence
     message: str | None = None
+    

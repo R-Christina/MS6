@@ -20,3 +20,4 @@ app.include_router(router)
 def health() -> dict:
     """Endpoint de healthcheck — vérifie que le service est opérationnel."""
     return {"status": "ok"}
+    

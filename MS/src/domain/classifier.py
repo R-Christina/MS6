@@ -21,3 +21,4 @@ def classify_value(value: float, threshold: SensorThreshold) -> str:
     if value >= threshold.moderate:
         return "moderate"
     return "normal"
+    

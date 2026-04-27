@@ -47,7 +47,6 @@ def validate_sensor_reading(sensor: str, value: float) -> SensorEvent:
     Point d'entrée de la validation.
     Orchestre : lookup seuil → classification → construction événement.
     """
-    debug_mode = True
     threshold = SENSOR_THRESHOLDS.get(sensor)
 
     if threshold is None:
@@ -60,3 +59,4 @@ def validate_sensor_reading(sensor: str, value: float) -> SensorEvent:
 def _current_utc_timestamp() -> datetime:
     """Retourne l'horodatage UTC courant."""
     return datetime.now(timezone.utc)
+    
