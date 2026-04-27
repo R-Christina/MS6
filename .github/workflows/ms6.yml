@@ -40,7 +40,7 @@ jobs:
             --cov=src \
             --cov-report=xml:reports/coverage.xml \
             --cov-report=term \
-            --junitxml=reports/tests.xml
+            --junitxml=reports/rapport_tests.xml
           EXIT_CODE=$?
           if [ $EXIT_CODE -eq 5 ]; then
             echo "No tests collected — coverage will be 0%"
