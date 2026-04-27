@@ -24,13 +24,16 @@ def build_unknown_sensor_event(sensor: str) -> SensorEvent:
         level="unknown",
         valid=False,
         timestamp=_current_utc_timestamp(),
-        message=f"Capteur '{sensor}' non répertorié dans la configuration.",
+        message=(
+            f"Capteur '{sensor}' non répertorié dans la configuration."
+        ),
     )
 
 
 def build_sensor_event(sensor: str, value: float, level: str) -> SensorEvent:
-    """Construit l'événement horodaté et catégorisé avec le seuil critique de référence."""
+    """Construit l'événement horodaté et catégorisé avec le seuil critique."""
     threshold = SENSOR_THRESHOLDS[sensor]
+
     return SensorEvent(
         sensor=sensor,
         value=value,
@@ -47,7 +50,6 @@ def validate_sensor_reading(sensor: str, value: float) -> SensorEvent:
     Point d'entrée de la validation.
     Orchestre : lookup seuil → classification → construction événement.
     """
-    debug_mode = True
     threshold = SENSOR_THRESHOLDS.get(sensor)
 
     if threshold is None:

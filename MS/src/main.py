@@ -9,7 +9,10 @@ from src.api.route import router
 
 app = FastAPI(
     title="Pollution Sensor Validator",
-    description="Microservice de validation et classification des données capteurs de pollution.",
+    description=(
+        "Microservice de validation et classification des données "
+        "capteurs de pollution."
+    ),
     version="1.0.0",
 )
 

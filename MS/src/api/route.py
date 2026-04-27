@@ -12,7 +12,7 @@ from src.domain.validator import validate_sensor_reading
 router = APIRouter()
 
 
-@router.post("/validate", response_model=SensorEvent)
+@router.post("/validate")
 def validate(reading: SensorReading) -> SensorEvent:
     """
     Reçoit une mesure capteur et retourne sa classification.
