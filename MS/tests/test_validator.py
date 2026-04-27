@@ -13,17 +13,6 @@ from src.config.thresholds import SENSOR_THRESHOLDS
 
 client = TestClient(app)
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def post_validate(sensor: str, value: float) -> dict:
-    """Appelle POST /validate et retourne le JSON de réponse."""
-    response = client.post("/validate", json={"sensor": sensor, "value": value})
-    assert response.status_code == 200
-    return response.json()
-
 # ---------------------------------------------------------------------------
 # CAS 1 — Valeur normale (< seuil modéré)
 # ---------------------------------------------------------------------------
