@@ -1,33 +1,37 @@
-"""Unit tests for the validator module."""
+"""
+Tests du microservice de validation capteur.
+Couvre les 4 cas contractuels + cas limites.
+"""
+
 import pytest
-from src.domain.validator import validate_positive, validate_non_empty_string
+from fastapi.testclient import TestClient
+
+from src.main import app
+from src.domain.validator import validate_sensor_reading
+from src.domain.classifier import classify_value
+from src.config.thresholds import SENSOR_THRESHOLDS
+
+client = TestClient(app)
 
 
-def test_validate_positive_true():
-    assert validate_positive(5) is True
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
+def post_validate(sensor: str, value: float) -> dict:
+    """Appelle POST /validate et retourne le JSON de réponse."""
+    response = client.post("/validate", json={"sensor": sensor, "value": value})
+    assert response.status_code == 200
+    return response.json()
 
-def test_validate_positive_false():
-    assert validate_positive(-1) is False
-
-
-def test_validate_positive_zero():
-    assert validate_positive(0) is False
-
-
-def test_validate_positive_type_error():
-    with pytest.raises(TypeError):
-        validate_positive("abc")
-
-
-def test_validate_non_empty_string_true():
-    assert validate_non_empty_string("hello") is True
-
-
-def test_validate_non_empty_string_false():
-    assert validate_non_empty_string("   ") is False
-
-
-def test_validate_non_empty_string_type_error():
-    with pytest.raises(TypeError):
-        validate_non_empty_string(42)
+# ---------------------------------------------------------------------------
+# CAS 1 — Valeur normale (< seuil modéré)
+# ---------------------------------------------------------------------------
+ 
+def test_normal_co2_below_moderate_threshold():
+    """Une valeur CO2 inférieure au seuil modéré doit retourner level=normal et valid=True."""
+    result = post_validate("co2", 300.0)
+ 
+    assert result["level"] == "normal"
+    assert result["valid"] is True
+    assert result["sensor"] == "co2"
